@@ -50,7 +50,7 @@ namespace hhgate
             MyJson.JsonNode_Object json = new MyJson.JsonNode_Object();
             json["tag"] = new MyJson.JsonNode_ValueNumber(0);
             MyJson.JsonNode_Array maps = new MyJson.JsonNode_Array();
-            json.SetDictValue("msg", "AntShares Http Gate By lights 0.01");
+            json.SetDictValue("msg", "AntShares Http Gate By lights 0.03");
             await context.Response.WriteAsync(json.ToString());
             return;
         }
