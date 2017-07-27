@@ -1,0 +1,9 @@
+D:\git\antshares_side\antsremote\bin\AntShares.SmartContract.Framework.dll
+D:\git\antshares_side\antsremote\bin\tcode.cs
+D:\git\antshares_side\antsremote\bin\ascsc.exe.config
+D:\git\antshares_side\antsremote\bin\ascsc.exe
+D:\git\antshares_side\antsremote\bin\ascsc.pdb
+D:\git\antshares_side\antsremote\cmdgen\obj\Debug\ascsc.Properties.Resources.resources
+D:\git\antshares_side\antsremote\cmdgen\obj\Debug\localgen.csproj.GenerateResource.Cache
+D:\git\antshares_side\antsremote\cmdgen\obj\Debug\ascsc.exe
+D:\git\antshares_side\antsremote\cmdgen\obj\Debug\ascsc.pdb
