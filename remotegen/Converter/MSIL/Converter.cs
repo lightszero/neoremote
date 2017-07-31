@@ -411,6 +411,8 @@ namespace Neo.Compiler.MSIL
                 //需要地址轉換的情況
                 case CodeEx.Br:
                 case CodeEx.Br_S:
+                case CodeEx.Leave:
+                case CodeEx.Leave_S:
                     {
                         var code = _Convert1by1(VM.OpCode.JMP, src, to, new byte[] { 0, 0 });
                         code.needfix = true;

@@ -161,7 +161,7 @@
             this.MaximizeBox = false;
             this.Name = "Form1";
             this.ShowInTaskbar = false;
-            this.Text = "小蚁智能合约远程服务器 v0.03";
+            this.Text = "小蚁智能合约远程服务器 v" + hhgate.AntGateway.ver;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();

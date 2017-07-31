@@ -14,7 +14,7 @@ namespace hhgate
 {
     public class AntGateway : CustomServer.IParser
     {
-
+        public const string ver ="0.031";
 
         public async Task HandleRequest(IOwinContext context, string rootpath, string relativePath)
         {
@@ -50,7 +50,7 @@ namespace hhgate
             MyJson.JsonNode_Object json = new MyJson.JsonNode_Object();
             json["tag"] = new MyJson.JsonNode_ValueNumber(0);
             MyJson.JsonNode_Array maps = new MyJson.JsonNode_Array();
-            json.SetDictValue("msg", "AntShares Http Gate By lights 0.03");
+            json.SetDictValue("msg", "AntShares Http Gate By lights "+ AntGateway.ver);
             await context.Response.WriteAsync(json.ToString());
             return;
         }
