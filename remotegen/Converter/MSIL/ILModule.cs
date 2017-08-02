@@ -42,6 +42,8 @@ namespace Neo.Compiler.MSIL
             {
                 foreach (var t in module.Types)
                 {
+                    if (t.FullName.Contains(".My."))//vb 系统类不要
+                        continue;
 
                     mapType[t.FullName] = new ILType(this, t);
                     if(t.HasNestedTypes)

@@ -14,7 +14,7 @@ namespace hhgate
 {
     public class AntGateway : CustomServer.IParser
     {
-        public const string ver ="0.031";
+        public const string ver ="0.032";
 
         public async Task HandleRequest(IOwinContext context, string rootpath, string relativePath)
         {

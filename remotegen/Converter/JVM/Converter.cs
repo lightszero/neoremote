@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 
 namespace Neo.Compiler.JVM
@@ -236,8 +237,8 @@ namespace Neo.Compiler.JVM
 
         static int getNumber(AntsCode code)
         {
-            if (code.code <= VM.OpCode.PUSHBYTES75)
-                return (int)code.code;
+            if (code.code <= VM.OpCode.PUSHBYTES75 && code.code >= VM.OpCode.PUSHBYTES1)
+                return (int)new BigInteger(code.bytes);
             else if (code.code == VM.OpCode.PUSH0) return 0;
             else if (code.code == VM.OpCode.PUSH1) return 1;
             else if (code.code == VM.OpCode.PUSH2) return 2;
