@@ -22,6 +22,7 @@ namespace remotegen
             cplist.GenerateExecutable = false;
             cplist.GenerateInMemory = false;
             cplist.ReferencedAssemblies.Add("System.dll");
+            cplist.ReferencedAssemblies.Add("System.Numerics.dll");
             if (dllfilenames != null)
             {
                 foreach (var dn in dllfilenames)
