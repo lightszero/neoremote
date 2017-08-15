@@ -14,7 +14,7 @@ namespace hhgate
 {
     public class AntGateway : CustomServer.IParser
     {
-        public const string ver ="0.033";
+        public const string ver ="0.035";
 
         public async Task HandleRequest(IOwinContext context, string rootpath, string relativePath)
         {
@@ -98,8 +98,12 @@ namespace hhgate
             {
                 case "System.Void":
                     return "void";
+                case "params System.Object[]":
+                    return "any[]";
                 case "System.Object":
                     return "any";
+                case "System.String":
+                    return "string";
                 case "System.Byte":
                 case "System.SByte":
                 case "System.Int16":
@@ -177,7 +181,7 @@ namespace hhgate
 
                         var conv = new Neo.Compiler.MSIL.ModuleConverter(logjson);
                         var neomd = conv.Convert(module);
-                        var mm = neomd.mapMethods[neomd.mainMethod];
+                        //var mm = neomd.mapMethods[neomd.mainMethod];
 
 
                         var bs = neomd.Build();
@@ -202,25 +206,31 @@ namespace hhgate
                                 json["hex"] = new MyJson.JsonNode_ValueString(sb.ToString());
                                 json["hash"] = new MyJson.JsonNode_ValueString(sb2.ToString());
 
-                                var funcsign = new MyJson.JsonNode_Object();
-                                json["funcsign"] = funcsign;
-                                funcsign.SetDictValue("name", mm.name);
-                                var rtype = ConvCSharpType(mm.returntype);
-                                funcsign.SetDictValue("returntype", rtype);
-                                MyJson.JsonNode_Array funcparams = new MyJson.JsonNode_Array();
-                                json["params"] = funcparams;
-                                if (mm.paramtypes != null)
+                                var funcsigns = new MyJson.JsonNode_Object();
+                                json["funcsigns"] = funcsigns;
+                                foreach (var function in neomd.mapMethods)
                                 {
-                                    foreach (var v in mm.paramtypes)
+                                    var mm = function.Value;
+                                    var ps = mm.name.Split(new char[] { ' ', '(' }, StringSplitOptions.RemoveEmptyEntries);
+                                    var funcsign = new MyJson.JsonNode_Object();
+                                    funcsigns[ps[1]] = funcsign;
+                                    funcsign.SetDictValue("name", ps[1]);
+                                    var rtype = ConvCSharpType(mm.returntype);
+                                    funcsign.SetDictValue("returntype", rtype);
+                                    MyJson.JsonNode_Array funcparams = new MyJson.JsonNode_Array();
+                                    funcsign["params"] = funcparams;
+                                    if (mm.paramtypes != null)
                                     {
-                                        var ptype = ConvCSharpType(v.type);
-                                        var item = new MyJson.JsonNode_Object();
-                                        funcparams.Add(item);
-                                        item.SetDictValue("name", v.name);
-                                        item.SetDictValue("type", ptype);
+                                        foreach (var v in mm.paramtypes)
+                                        {
+                                            var ptype = ConvCSharpType(v.type);
+                                            var item = new MyJson.JsonNode_Object();
+                                            funcparams.Add(item);
+                                            item.SetDictValue("name", v.name);
+                                            item.SetDictValue("type", ptype);
+                                        }
                                     }
                                 }
-
                                 await context.Response.WriteAsync(json.ToString());
                                 return;
                             }

@@ -28,6 +28,7 @@ namespace remotegen
         }
         private void Form1_Load(object sender, EventArgs e)
         {
+            this.Text = "小蚁智能合约远程服务器 v" + hhgate.AntGateway.ver;
             //log 本地IP
             {
                 System.Net.IPAddress[] addressList = Dns.GetHostAddresses(Dns.GetHostName());
