@@ -14,7 +14,7 @@ namespace hhgate
 {
     public class AntGateway : CustomServer.IParser
     {
-        public const string ver ="0.033";
+        public const string ver ="0.034";
 
         public async Task HandleRequest(IOwinContext context, string rootpath, string relativePath)
         {
@@ -204,11 +204,12 @@ namespace hhgate
 
                                 var funcsign = new MyJson.JsonNode_Object();
                                 json["funcsign"] = funcsign;
-                                funcsign.SetDictValue("name", mm.name);
+                                var ps = mm.name.Split(new char[] { ' ', '(' }, StringSplitOptions.RemoveEmptyEntries);
+                                funcsign.SetDictValue("name", ps[1]);
                                 var rtype = ConvCSharpType(mm.returntype);
                                 funcsign.SetDictValue("returntype", rtype);
                                 MyJson.JsonNode_Array funcparams = new MyJson.JsonNode_Array();
-                                json["params"] = funcparams;
+                                funcsign["params"] = funcparams;
                                 if (mm.paramtypes != null)
                                 {
                                     foreach (var v in mm.paramtypes)
