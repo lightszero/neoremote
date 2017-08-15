@@ -92,7 +92,34 @@ namespace hhgate
             }
 
         }
-
+        static string ConvCSharpType(string csharpType)
+        {
+            switch(csharpType)
+            {
+                case "System.Void":
+                    return "void";
+                case "System.Object":
+                    return "any";
+                case "System.Byte":
+                case "System.SByte":
+                case "System.Int16":
+                case "System.UInt16":
+                case "System.Int32":
+                case "System.UInt32":
+                case "System.Int64":
+                case "System.UInt64":
+                    return "number";
+                case "System.Boolean":
+                    return "bool";
+                case "System.Byte[]":
+                    return "bytearray";
+            }
+            if (csharpType == "System.Object")
+                return "any";
+            if (csharpType == "System.Int32")
+                return "number";
+            return "Unknown";
+        }
         private static async Task parseCSharp(IOwinContext context, FormData formdata)
         {
             try
@@ -175,16 +202,22 @@ namespace hhgate
                                 json["hex"] = new MyJson.JsonNode_ValueString(sb.ToString());
                                 json["hash"] = new MyJson.JsonNode_ValueString(sb2.ToString());
 
-
-
-                                json["returntype"] = new MyJson.JsonNode_ValueString(mm.returntype);
+                                var funcsign = new MyJson.JsonNode_Object();
+                                json["funcsign"] = funcsign;
+                                funcsign.SetDictValue("name", mm.name);
+                                var rtype = ConvCSharpType(mm.returntype);
+                                funcsign.SetDictValue("returntype", rtype);
                                 MyJson.JsonNode_Array funcparams = new MyJson.JsonNode_Array();
                                 json["params"] = funcparams;
                                 if (mm.paramtypes != null)
                                 {
                                     foreach (var v in mm.paramtypes)
                                     {
-                                        funcparams.Add(new MyJson.JsonNode_ValueString(v.type));
+                                        var ptype = ConvCSharpType(v.type);
+                                        var item = new MyJson.JsonNode_Object();
+                                        funcparams.Add(item);
+                                        item.SetDictValue("name", v.name);
+                                        item.SetDictValue("type", ptype);
                                     }
                                 }
 
