@@ -14,7 +14,7 @@ namespace hhgate
 {
     public class AntGateway : CustomServer.IParser
     {
-        public const string ver ="0.036";
+        public const string ver = "0.040";
 
         public async Task HandleRequest(IOwinContext context, string rootpath, string relativePath)
         {
@@ -50,7 +50,7 @@ namespace hhgate
             MyJson.JsonNode_Object json = new MyJson.JsonNode_Object();
             json["tag"] = new MyJson.JsonNode_ValueNumber(0);
             MyJson.JsonNode_Array maps = new MyJson.JsonNode_Array();
-            json.SetDictValue("msg", "AntShares Http Gate By lights "+ AntGateway.ver);
+            json.SetDictValue("msg", "AntShares Http Gate By lights " + AntGateway.ver);
             await context.Response.WriteAsync(json.ToString());
             return;
         }
@@ -94,7 +94,7 @@ namespace hhgate
         }
         static string ConvCSharpType(string csharpType)
         {
-            switch(csharpType)
+            switch (csharpType)
             {
                 case "System.Void":
                     return "void";
@@ -112,6 +112,7 @@ namespace hhgate
                 case "System.UInt32":
                 case "System.Int64":
                 case "System.UInt64":
+                case "System.Numerics.BigInteger":
                     return "number";
                 case "System.Boolean":
                     return "bool";
@@ -122,7 +123,7 @@ namespace hhgate
                 return "any";
             if (csharpType == "System.Int32")
                 return "number";
-            return "Unknown:"+csharpType;
+            return "Unknown:" + csharpType;
         }
         private static async Task parseCSharp(IOwinContext context, FormData formdata)
         {
@@ -180,6 +181,11 @@ namespace hhgate
                         module.LoadModule(st, null);
 
                         var conv = new Neo.Compiler.MSIL.ModuleConverter(logjson);
+                        Dictionary<AntsMethod, ILMethod> revert = new Dictionary<AntsMethod, ILMethod>();
+                        foreach (var item in conv.methodLink)
+                        {
+                            revert[item.Value] = item.Key;
+                        }
                         var neomd = conv.Convert(module);
                         //var mm = neomd.mapMethods[neomd.mainMethod];
 
@@ -211,6 +217,8 @@ namespace hhgate
                                 foreach (var function in neomd.mapMethods)
                                 {
                                     var mm = function.Value;
+                                    if (mm.isPublic == false)
+                                        continue;
                                     var ps = mm.name.Split(new char[] { ' ', '(' }, StringSplitOptions.RemoveEmptyEntries);
                                     var funcsign = new MyJson.JsonNode_Object();
                                     funcsigns[ps[1]] = funcsign;
@@ -345,12 +353,12 @@ namespace hhgate
                     List<int> errorline = new List<int>();
                     List<string> errorTag = new List<string>();
                     string[] lines = back.Split(new string[] { "\r\n" }, StringSplitOptions.None);
-                    for(var i=0;i<lines.Length;i++)
+                    for (var i = 0; i < lines.Length; i++)
                     {
-                        if(inerror=="")
+                        if (inerror == "")
                         {
                             var mm = lines[i].Split(':');
-                            if(mm.Length>3)
+                            if (mm.Length > 3)
                             {
                                 line = int.Parse(mm[1]);
                                 inerror += mm[3];
@@ -360,7 +368,7 @@ namespace hhgate
                         }
                         else
                         {
-                            if(lines[i].IndexOf("^")>=0)
+                            if (lines[i].IndexOf("^") >= 0)
                             {
                                 outline.Add(inerror);
                                 errorline.Add(line);
@@ -374,7 +382,7 @@ namespace hhgate
                         }
                     }
 
-                    if (outline.Count==0)
+                    if (outline.Count == 0)
                     {
                         //succ
                     }
@@ -392,7 +400,7 @@ namespace hhgate
                             errs.Add(errtag);
                             errtag.SetDictValue("msg", outline[i]);
                             errtag.SetDictValue("line", errorline[i]);
-                            errtag.SetDictValue("tag",errorTag[i]);
+                            errtag.SetDictValue("tag", errorTag[i]);
                             //errtag.SetDictValue("col", r.Errors[i].Column);
                         }
                         await context.Response.WriteAsync(json.ToString());
@@ -418,8 +426,8 @@ namespace hhgate
                     var logjson = new Log2Json();
                     var conv = new Neo.Compiler.JVM.ModuleConverter(logjson);
                     var neomd = conv.Convert(module);
-                    var mm=                    neomd.mapMethods[neomd.mainMethod]; 
-                   
+                    var mm = neomd.mapMethods[neomd.mainMethod];
+
                     var bs = neomd.Build();
                     if (bs != null)
                     {
@@ -443,9 +451,9 @@ namespace hhgate
                         json["returntype"] = new MyJson.JsonNode_ValueString(mm.returntype);
                         MyJson.JsonNode_Array funcparams = new MyJson.JsonNode_Array();
                         json["params"] = funcparams;
-                        if(mm.paramtypes!=null)
+                        if (mm.paramtypes != null)
                         {
-                            foreach(var v in mm.paramtypes)
+                            foreach (var v in mm.paramtypes)
                             {
                                 funcparams.Add(new MyJson.JsonNode_ValueString(v.type));
                             }

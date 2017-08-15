@@ -87,6 +87,7 @@ namespace Neo.Compiler
         public string name;
         public List<AntsParam> paramtypes = new List<AntsParam>();
         public string returntype;
+        public bool isPublic = true;
         //临时变量
         public List<AntsParam> body_Variables = new List<AntsParam>();
 

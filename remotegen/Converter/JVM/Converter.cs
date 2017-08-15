@@ -58,6 +58,7 @@ namespace Neo.Compiler.JVM
                     if (m.Key[0] == '<') continue;//系統函數不要
                     AntsMethod nm = new AntsMethod();
                     nm.name = c.classfile.Name + "::" + m.Key;
+                    nm.isPublic = m.Value.method.IsPublic;
                     this.methodLink[m.Value] = nm;
                     outModule.mapMethods[nm.name] = nm;
                 }

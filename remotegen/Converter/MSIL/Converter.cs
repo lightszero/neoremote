@@ -63,6 +63,7 @@ namespace Neo.Compiler.MSIL
                     if (m.Value.method == null) continue;
                     AntsMethod nm = new AntsMethod();
                     nm.name = m.Value.method.FullName;
+                    nm.isPublic = m.Value.method.IsPublic;
                     this.methodLink[m.Value] = nm;
                     outModule.mapMethods[nm.name] = nm;
 

@@ -77,7 +77,7 @@ namespace Neo.Compiler.MSIL
             {
                 _ConvertPush(pos + method.paramtypes.Count, src, to);
             }
-            else if(n2.code==CodeEx.Call&&n2.tokenMethod.Contains(".ctor"))
+            else if (n2.code == CodeEx.Call && n2.tokenMethod.Contains(".ctor"))
             {
                 _ConvertPush(pos + method.paramtypes.Count, src, to);
 
@@ -162,15 +162,42 @@ namespace Neo.Compiler.MSIL
                 {
                     var type = attr.ConstructorArguments[0].Type;
                     var a = attr.ConstructorArguments[0];
-                    var list = a.Value as Mono.Cecil.CustomAttributeArgument[];
-                    hash = new byte[20];
-                    for (var i = 0; i < 20; i++)
+                    if (a.Type.FullName == "System.String")
                     {
-                        hash[i] = (byte)list[i].Value;
-                    }
+                        string hashstr = (string)a.Value;
 
-                    //dosth
-                    return true;
+                        try
+                        {
+                            hash = new byte[20];
+                            if (hashstr.Length < 40)
+                                throw new Exception("hash too short:" + hashstr);
+                            for (var i = 0; i < 20; i++)
+                            {
+                                hash[i] = byte.Parse(hashstr.Substring(i * 2, 2), System.Globalization.NumberStyles.HexNumber);
+                            }
+                        }
+                        catch
+                        {
+                            throw new Exception("hex format error:" + hashstr);
+                        }
+                    }
+                    else
+                    {
+                        var list = a.Value as Mono.Cecil.CustomAttributeArgument[];
+                        
+                        if(list==null||list.Length<20)
+                        {
+                            throw new Exception("hash too short.");
+                        }
+                        hash = new byte[20];
+                        for (var i = 0; i < 20; i++)
+                        {
+                            hash[i] = (byte)list[i].Value;
+                        }
+
+                        //dosth
+                        return true;
+                    }
 
 
 
