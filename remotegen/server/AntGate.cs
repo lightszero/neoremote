@@ -14,7 +14,7 @@ namespace hhgate
 {
     public class AntGateway : CustomServer.IParser
     {
-        public const string ver ="0.035";
+        public const string ver ="0.036";
 
         public async Task HandleRequest(IOwinContext context, string rootpath, string relativePath)
         {
@@ -98,7 +98,7 @@ namespace hhgate
             {
                 case "System.Void":
                     return "void";
-                case "params System.Object[]":
+                case "System.Object[]":
                     return "any[]";
                 case "System.Object":
                     return "any";
@@ -122,7 +122,7 @@ namespace hhgate
                 return "any";
             if (csharpType == "System.Int32")
                 return "number";
-            return "Unknown";
+            return "Unknown:"+csharpType;
         }
         private static async Task parseCSharp(IOwinContext context, FormData formdata)
         {
