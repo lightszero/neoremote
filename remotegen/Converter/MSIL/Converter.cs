@@ -57,10 +57,11 @@ namespace Neo.Compiler.MSIL
                 if (t.Key[0] == '<') continue;//系统的，不要
                 if (t.Key.Contains("_API_")) continue;//api的，不要
                 if (t.Key.Contains(".My."))
-                     continue;//vb system
+                    continue;//vb system
                 foreach (var m in t.Value.methods)
                 {
                     if (m.Value.method == null) continue;
+                    if (m.Value.method.IsAddOn || m.Value.method.IsRemoveOn) continue;//event 自动生成的代码，不要
                     AntsMethod nm = new AntsMethod();
                     nm.name = m.Value.method.FullName;
                     nm.isPublic = m.Value.method.IsPublic;
@@ -76,9 +77,12 @@ namespace Neo.Compiler.MSIL
                 if (t.Key.Contains("_API_")) continue;//api的，不要
                 if (t.Key.Contains(".My."))
                     continue;//vb system
+
                 foreach (var m in t.Value.methods)
                 {
                     if (m.Value.method == null) continue;
+                    if (m.Value.method.IsAddOn || m.Value.method.IsRemoveOn) continue;//event 自动生成的代码，不要
+
                     var nm = this.methodLink[m.Value];
                     //try
                     {
@@ -303,7 +307,7 @@ namespace Neo.Compiler.MSIL
                 }
             }
         }
-
+        string lastsfieldname;
         private int ConvertCode(ILMethod method, OpCode src, AntsMethod to)
         {
             int skipcount = 0;
@@ -675,6 +679,12 @@ namespace Neo.Compiler.MSIL
                     break;
                 case CodeEx.Ldfld:
                     _ConvertLdfld(src, to);
+                    break;
+
+                case CodeEx.Ldsfld:
+                    //调用delegate会导致这个代码，忽略它
+                    var d = src.tokenUnknown as Mono.Cecil.FieldReference;
+                    lastsfieldname = d.Name;
                     break;
                 default:
 #if WITHPDB

@@ -184,8 +184,8 @@ namespace Neo.Compiler.MSIL
                     else
                     {
                         var list = a.Value as Mono.Cecil.CustomAttributeArgument[];
-                        
-                        if(list==null||list.Length<20)
+
+                        if (list == null || list.Length < 20)
                         {
                             throw new Exception("hash too short.");
                         }
@@ -263,6 +263,45 @@ namespace Neo.Compiler.MSIL
             return false;
 
         }
+        public bool IsNotifyCall(Mono.Cecil.MethodDefinition defs, Mono.Cecil.MethodReference refs, out string name)
+        {
+            Mono.Cecil.TypeDefinition call = null;
+            if (defs == null)
+            {
+                try
+                {
+                    call = refs.DeclaringType.Resolve();
+                }
+                catch
+                {//当不能取得这个，大半都是模板类
+
+                }
+            }
+            else
+            {
+                call = defs.DeclaringType;
+            }
+
+            if (call != null)
+            {
+                if (call.BaseType.Name == "MulticastDelegate" || call.BaseType.Name == "Delegate")
+                {
+                    name = defs.Parameters.Count.ToString();// "Notify";
+                    return true;
+                }
+            }
+            else//不能还原类型，只好用名字判断了
+            {
+                if (refs.Name == "Invoke" && refs.DeclaringType.Name.Contains("Action`"))
+                {
+                    name = refs.Parameters.Count.ToString();
+                    return true;
+
+                }
+            }
+            name = "Notify";
+            return false;
+        }
         private int _ConvertCall(OpCode src, AntsMethod to)
         {
             Mono.Cecil.MethodReference refs = src.tokenUnknown as Mono.Cecil.MethodReference;
@@ -281,9 +320,14 @@ namespace Neo.Compiler.MSIL
             {
 
             }
+
             if (IsNonCall(defs))
             {
                 return 0;
+            }
+            else if (IsNotifyCall(defs, refs, out callname))
+            {
+                calltype = 5;
             }
             else if (IsOpCall(defs, out callname))
             {
@@ -583,6 +627,27 @@ namespace Neo.Compiler.MSIL
             {
                 _Convert1by1(VM.OpCode.APPCALL, null, to, callhash);
 
+            }
+            else if (calltype == 5)
+            {
+                int paramcount = int.Parse(callname);
+
+                //把name参数推进去
+                var callp = Encoding.UTF8.GetBytes(this.lastsfieldname);
+                _ConvertPush(callp, src, to);
+
+                _ConvertPush(paramcount + 1, null, to);
+                _Convert1by1(VM.OpCode.PACK, null, to);
+
+                //a syscall
+                {
+                    var bytes = Encoding.UTF8.GetBytes("Neo.Runtime.Notify");
+                    byte[] outbytes = new byte[bytes.Length + 1];
+                    outbytes[0] = (byte)bytes.Length;
+                    Array.Copy(bytes, 0, outbytes, 1, bytes.Length);
+                    //bytes.Prepend 函数在 dotnet framework 4.6 编译不过
+                    _Convert1by1(VM.OpCode.SYSCALL, null, to, outbytes);
+                }
             }
             return 0;
         }
