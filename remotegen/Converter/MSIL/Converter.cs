@@ -682,9 +682,44 @@ namespace Neo.Compiler.MSIL
                     break;
 
                 case CodeEx.Ldsfld:
-                    //调用delegate会导致这个代码，忽略它
-                    var d = src.tokenUnknown as Mono.Cecil.FieldReference;
-                    lastsfieldname = d.Name;
+
+                    {
+
+                        var d = src.tokenUnknown as Mono.Cecil.FieldDefinition;
+                        //如果是readonly，可以pull个常量上来的
+                        if (
+                            ((d.Attributes & Mono.Cecil.FieldAttributes.InitOnly) > 0) &&
+                            ((d.Attributes & Mono.Cecil.FieldAttributes.Static) > 0)
+                            )
+                        {
+
+                            break;
+                        }
+
+
+                        //如果是调用event导致的这个代码，只找出他的名字
+                        if (d.DeclaringType.HasEvents)
+                        {
+                            foreach (var ev in d.DeclaringType.Events)
+                            {
+                                if (ev.Name == d.Name && ev.EventType.FullName == d.FieldType.FullName)
+                                {
+
+                                    Mono.Collections.Generic.Collection<Mono.Cecil.CustomAttribute> ca = ev.CustomAttributes;
+                                    lastsfieldname = d.Name;
+                                    foreach (var attr in ca)
+                                    {
+                                        if (attr.AttributeType.Name == "DisplayNameAttribute")
+                                        {
+                                            lastsfieldname = (string)attr.ConstructorArguments[0].Value;
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+
+                    }
                     break;
                 default:
 #if WITHPDB

@@ -265,12 +265,13 @@ namespace Neo.Compiler.MSIL
         }
         public bool IsNotifyCall(Mono.Cecil.MethodDefinition defs, Mono.Cecil.MethodReference refs, out string name)
         {
+            name = this.lastsfieldname;
             Mono.Cecil.TypeDefinition call = null;
             if (defs == null)
             {
                 try
                 {
-                    call = refs.DeclaringType.Resolve();
+                    call = refs.DeclaringType.Resolve(); 
                 }
                 catch
                 {//当不能取得这个，大半都是模板类
@@ -286,7 +287,6 @@ namespace Neo.Compiler.MSIL
             {
                 if (call.BaseType.Name == "MulticastDelegate" || call.BaseType.Name == "Delegate")
                 {
-                    name = defs.Parameters.Count.ToString();// "Notify";
                     return true;
                 }
             }
@@ -294,7 +294,6 @@ namespace Neo.Compiler.MSIL
             {
                 if (refs.Name == "Invoke" && refs.DeclaringType.Name.Contains("Action`"))
                 {
-                    name = refs.Parameters.Count.ToString();
                     return true;
 
                 }
@@ -630,13 +629,13 @@ namespace Neo.Compiler.MSIL
             }
             else if (calltype == 5)
             {
-                int paramcount = int.Parse(callname);
 
                 //把name参数推进去
-                var callp = Encoding.UTF8.GetBytes(this.lastsfieldname);
+                var callp = Encoding.UTF8.GetBytes(callname);
                 _ConvertPush(callp, src, to);
 
-                _ConvertPush(paramcount + 1, null, to);
+                //参数打包成array
+                _ConvertPush(pcount + 1, null, to);
                 _Convert1by1(VM.OpCode.PACK, null, to);
 
                 //a syscall
