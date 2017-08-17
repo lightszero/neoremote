@@ -777,7 +777,12 @@ namespace Neo.Compiler.MSIL
         }
         private int _ConvertNewObj(OpCode src, AntsMethod to)
         {
-            var type = (src.tokenUnknown as Mono.Cecil.MethodReference).Resolve();
+            var _type = (src.tokenUnknown as Mono.Cecil.MethodReference);
+            if(_type.FullName== "System.Void System.Numerics.BigInteger::.ctor(System.Byte[])")
+            {
+                return 0;//donothing;
+            }
+            var type= _type.Resolve();
             _Convert1by1(VM.OpCode.NOP, src, to);//空白
             _ConvertPush(type.DeclaringType.Fields.Count, null, to);//插入个数量
             if (type.DeclaringType.IsValueType)
