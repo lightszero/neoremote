@@ -79,6 +79,7 @@
     <Compile Include="Converter\JVM\java.cecil\loader\ClassFile.cs" />
     <Compile Include="Converter\JVM\java.cecil\loader\TypeWarper.cs" />
     <Compile Include="Converter\JVM\JAVAModule.cs" />
+    <Compile Include="Converter\MSIL\CctorSubVM.cs" />
     <Compile Include="Converter\MSIL\Converter.cs" />
     <Compile Include="Converter\MSIL\Conv_Common.cs" />
     <Compile Include="Converter\MSIL\Conv_Multi.cs" />

@@ -63,11 +63,17 @@ namespace Neo.Compiler.MSIL
                     if (m.Value.method == null) continue;
                     if (m.Value.method.IsAddOn || m.Value.method.IsRemoveOn) continue;//event 自动生成的代码，不要
                     AntsMethod nm = new AntsMethod();
+                    if (m.Key == ".cctor")
+                    {
+                        CctorSubVM.Parse(m.Value, this.outModule);
+                        continue;
+                    }
+                    if (m.Value.method.IsConstructor) continue;
+                    nm._namespace = m.Value.method.DeclaringType.FullName;
                     nm.name = m.Value.method.FullName;
                     nm.isPublic = m.Value.method.IsPublic;
                     this.methodLink[m.Value] = nm;
                     outModule.mapMethods[nm.name] = nm;
-
 
                 }
             }
@@ -80,10 +86,16 @@ namespace Neo.Compiler.MSIL
 
                 foreach (var m in t.Value.methods)
                 {
+
                     if (m.Value.method == null) continue;
+                    if (m.Key == ".cctor")
+                    {
+                        continue;
+                    }
                     if (m.Value.method.IsAddOn || m.Value.method.IsRemoveOn) continue;//event 自动生成的代码，不要
 
                     var nm = this.methodLink[m.Value];
+
                     //try
                     {
                         this.ConvertMethod(m.Value, nm);
@@ -202,6 +214,7 @@ namespace Neo.Compiler.MSIL
                 }
             }
         }
+
         private void ConvertMethod(ILMethod from, AntsMethod to)
         {
             to.returntype = from.returntype;
@@ -307,7 +320,6 @@ namespace Neo.Compiler.MSIL
                 }
             }
         }
-        string lastsfieldname;
         private int ConvertCode(ILMethod method, OpCode src, AntsMethod to)
         {
             int skipcount = 0;
@@ -682,9 +694,69 @@ namespace Neo.Compiler.MSIL
                     break;
 
                 case CodeEx.Ldsfld:
-                    //调用delegate会导致这个代码，忽略它
-                    var d = src.tokenUnknown as Mono.Cecil.FieldReference;
-                    lastsfieldname = d.Name;
+
+                    {
+
+                        var d = src.tokenUnknown as Mono.Cecil.FieldDefinition;
+                        //如果是readonly，可以pull个常量上来的
+                        if (
+                            ((d.Attributes & Mono.Cecil.FieldAttributes.InitOnly) > 0) &&
+                            ((d.Attributes & Mono.Cecil.FieldAttributes.Static) > 0)
+                            )
+                        {
+                            var fname = d.DeclaringType.FullName + "::" + d.Name;
+                            var _src = outModule.staticfields[fname];
+                            if (_src is byte[])
+                            {
+                                var bytesrc = (byte[])_src;
+                                _ConvertPush(bytesrc, src, to);
+                            }
+                            else if (_src is int)
+                            {
+                                var intsrc = (int)_src;
+                                _ConvertPush(intsrc, src, to);
+                            }
+                            else if (_src is Boolean)
+                            {
+                                var bsrc = (Boolean)_src;
+                                _ConvertPush(bsrc ? 1 : 0, src, to);
+                            }
+                            else if (_src is string)
+                            {
+                                var bytesrc = System.Text.Encoding.UTF8.GetBytes((string)_src);
+                                _ConvertPush(bytesrc, src, to);
+                            }
+                            else
+                            {
+                                throw new Exception("not support type Ldsfld");
+                            }
+                            break;
+                        }
+
+
+                        //如果是调用event导致的这个代码，只找出他的名字
+                        if (d.DeclaringType.HasEvents)
+                        {
+                            foreach (var ev in d.DeclaringType.Events)
+                            {
+                                if (ev.Name == d.Name && ev.EventType.FullName == d.FieldType.FullName)
+                                {
+
+                                    Mono.Collections.Generic.Collection<Mono.Cecil.CustomAttribute> ca = ev.CustomAttributes;
+                                    to.lastsfieldname = d.Name;
+                                    foreach (var attr in ca)
+                                    {
+                                        if (attr.AttributeType.Name == "DisplayNameAttribute")
+                                        {
+                                            to.lastsfieldname = (string)attr.ConstructorArguments[0].Value;
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+
+                    }
                     break;
                 default:
 #if WITHPDB
