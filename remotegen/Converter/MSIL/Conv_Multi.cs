@@ -175,6 +175,8 @@ namespace Neo.Compiler.MSIL
                             {
                                 hash[i] = byte.Parse(hashstr.Substring(i * 2, 2), System.Globalization.NumberStyles.HexNumber);
                             }
+
+                            return true;
                         }
                         catch
                         {
