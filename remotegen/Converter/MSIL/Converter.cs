@@ -758,6 +758,13 @@ namespace Neo.Compiler.MSIL
 
                     }
                     break;
+                case CodeEx.Throw:
+                    {
+                        _Convert1by1(VM.OpCode.THROW, src, to);//throw 会让vm 挂起
+                        //不需要再插入return
+                        //_Insert1(VM.OpCode.RET, "", to);
+                    }
+                    break;
                 default:
 #if WITHPDB
                     logger.Log("unsupported instruction " + src.code);
