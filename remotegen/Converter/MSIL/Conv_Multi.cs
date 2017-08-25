@@ -175,7 +175,8 @@ namespace Neo.Compiler.MSIL
                             {
                                 hash[i] = byte.Parse(hashstr.Substring(i * 2, 2), System.Globalization.NumberStyles.HexNumber);
                             }
-
+                            //string hexhash 需要反序
+                            hash = hash.Reverse().ToArray();
                             return true;
                         }
                         catch
@@ -196,7 +197,8 @@ namespace Neo.Compiler.MSIL
                         {
                             hash[i] = (byte)list[i].Value;
                         }
-
+                        //byte hash 需要反序
+                        hash = hash.Reverse().ToArray();
                         //dosth
                         return true;
                     }
@@ -419,7 +421,7 @@ namespace Neo.Compiler.MSIL
                 }
                 else if (src.tokenMethod.Contains("::op_Inequality("))
                 {
-                    var _ref= src.tokenUnknown as Mono.Cecil.MethodReference;
+                    var _ref = src.tokenUnknown as Mono.Cecil.MethodReference;
                     if (_ref.DeclaringType.FullName == "System.Boolean"
                         || _ref.DeclaringType.FullName == "System.Int32"
                         || _ref.DeclaringType.FullName == "System.Numerics.BigInteger")
@@ -805,22 +807,22 @@ namespace Neo.Compiler.MSIL
         private int _ConvertNewObj(OpCode src, AntsMethod to)
         {
             var _type = (src.tokenUnknown as Mono.Cecil.MethodReference);
-            if(_type.FullName== "System.Void System.Numerics.BigInteger::.ctor(System.Byte[])")
+            if (_type.FullName == "System.Void System.Numerics.BigInteger::.ctor(System.Byte[])")
             {
                 return 0;//donothing;
 
             }
-            else if(_type.DeclaringType.FullName.Contains("Exception"))
+            else if (_type.DeclaringType.FullName.Contains("Exception"))
             {
                 _Convert1by1(VM.OpCode.NOP, src, to);//空白
                 var pcount = _type.Parameters.Count;
-                for(var i =0;i<pcount;i++)
+                for (var i = 0; i < pcount; i++)
                 {
                     _Insert1(VM.OpCode.DROP, "", to);
                 }
                 return 0;
             }
-            var type= _type.Resolve();
+            var type = _type.Resolve();
             _Convert1by1(VM.OpCode.NOP, src, to);//空白
             _ConvertPush(type.DeclaringType.Fields.Count, null, to);//插入个数量
             if (type.DeclaringType.IsValueType)
