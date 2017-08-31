@@ -176,7 +176,7 @@ namespace Neo.Compiler.JVM
                 //    this.body_Variables.Add(new Param("_noname", ""));
                 //}
 
-                for (var i = 0; i < local.Count; i++)
+                for (var i = 0; i < MaxVariableIndex; i++)
                 {
                     this.body_Variables.Add(new AntsParam("_noname", ""));
                 }

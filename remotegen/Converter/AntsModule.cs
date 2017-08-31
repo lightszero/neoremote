@@ -149,6 +149,7 @@ namespace Neo.Compiler
         public string debugILCode;
         public bool needfix = false;//lateparse tag
         public int srcaddr;
+        public int[] srcaddrswitch;
         public string srcfunc;
         public override string ToString()
         {

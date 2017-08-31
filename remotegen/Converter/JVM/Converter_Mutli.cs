@@ -230,9 +230,25 @@ namespace Neo.Compiler.JVM
                     _Convert1by1(VM.OpCode.DROP, src, to);
                     return 0;
                 }
+                else if(name== "java.math.BigInteger::<init>")
+                {//do nothing
+                    if (c.Signature == "([B)V")
+                    {
+                        return 0;
+                    }
+                    else if(c.Signature== "(Ljava/lang/String;)V")
+                    {
+                        throw new Exception("not support new BigInteger(string)");
+                    }
+                }
                 else if (name == "java.math.BigInteger::add")
                 {
                     _Convert1by1(VM.OpCode.ADD, src, to);
+                    return 0;
+                }
+                else if(name== "java.math.BigInteger::subtract")
+                {
+                    _Convert1by1(VM.OpCode.SUB, src, to);
                     return 0;
                 }
                 else if (name == "java.math.BigInteger::multiply")
@@ -298,6 +314,11 @@ namespace Neo.Compiler.JVM
                 else if(c.Class== "java.lang.StringBuilder")
                 {
                     return _ConvertStringBuilder(c.Name, null, to);
+                }
+                else  if(name== "java.util.Arrays::equals")
+                {
+                    _Convert1by1(VM.OpCode.EQUAL, null, to);
+                    return 0;
                 }
             }
 
@@ -447,6 +468,18 @@ namespace Neo.Compiler.JVM
             {
                 _ConvertPush(1, src, to);
                 _Insert1(VM.OpCode.NEWARRAY, "", to);
+            }
+            else if(c.Name== "java.math.BigInteger")
+            {
+                var next = method.GetNextCodeAddr(src.addr);
+                if(method.body_Codes[next].code== javaloader.NormalizedByteCode.__dup)
+                {
+                    return 1;
+                }
+                else
+                {
+                    return 0;
+                }
             }
             else
             {

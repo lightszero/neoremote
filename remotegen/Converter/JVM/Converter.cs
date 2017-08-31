@@ -220,7 +220,10 @@ namespace Neo.Compiler.JVM
                 else
                 {
                     //在return之前加入清理参数代码
-                    if (src.code == javaloader.NormalizedByteCode.__return || src.code == javaloader.NormalizedByteCode.__ireturn)//before return 
+                    if (src.code == javaloader.NormalizedByteCode.__return
+                        || src.code == javaloader.NormalizedByteCode.__ireturn
+                        || src.code == javaloader.NormalizedByteCode.__lreturn
+                        || src.code == javaloader.NormalizedByteCode.__areturn)//before return 
                     {
                         _insertEndCode(from, to, src);
                     }
@@ -377,18 +380,22 @@ namespace Neo.Compiler.JVM
 
                 case javaloader.NormalizedByteCode.__astore:
                 case javaloader.NormalizedByteCode.__istore:
+                case javaloader.NormalizedByteCode.__lstore:
                     _ConvertStLoc(src, to, src.arg1);
                     break;
                 case javaloader.NormalizedByteCode.__aload:
                 case javaloader.NormalizedByteCode.__iload:
+                case javaloader.NormalizedByteCode.__lload:
                     _ConvertLdLoc(src, to, src.arg1);
                     break;
                 case javaloader.NormalizedByteCode.__aaload:
                 case javaloader.NormalizedByteCode.__iaload:
+                case javaloader.NormalizedByteCode.__laload:
                     _Convert1by1(VM.OpCode.PICKITEM, src, to);
                     break;
                 case javaloader.NormalizedByteCode.__iastore:
                 case javaloader.NormalizedByteCode.__aastore:
+                case javaloader.NormalizedByteCode.__lastore:
                     _Convert1by1(VM.OpCode.SETITEM, src, to);
                     break;
                 case javaloader.NormalizedByteCode.__arraylength:
@@ -422,7 +429,10 @@ namespace Neo.Compiler.JVM
                     //_Convert1by1(VM.OpCode.INC, src, to);
 
                     break;
-
+                case javaloader.NormalizedByteCode.__lcmp:
+                    _Convert1by1(VM.OpCode.SUB, src, to);
+                    _Convert1by1(VM.OpCode.SIGN, null, to);
+                    break;
 
                 //    case CodeEx.Ldloc_0:
                 //        _ConvertLdLoc(src, to, 0);
@@ -527,7 +537,7 @@ namespace Neo.Compiler.JVM
                 case javaloader.NormalizedByteCode.__iflt:
                     {
                         _ConvertPush(0, src, to);//和0比较
-                        _Convert1by1(VM.OpCode.GT, null, to);
+                        _Convert1by1(VM.OpCode.LT, null, to);
                         var code = _Convert1by1(VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
                         code.needfix = true;
                         code.srcaddr = src.arg1 + src.addr;
@@ -544,7 +554,7 @@ namespace Neo.Compiler.JVM
                 case javaloader.NormalizedByteCode.__ifle:
                     {
                         _ConvertPush(0, src, to);//和0比较
-                        _Convert1by1(VM.OpCode.GT, null, to);
+                        _Convert1by1(VM.OpCode.LTE, null, to);
                         var code = _Convert1by1(VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
                         code.needfix = true;
                         code.srcaddr = src.addr + src.arg1;
@@ -561,7 +571,7 @@ namespace Neo.Compiler.JVM
                 case javaloader.NormalizedByteCode.__ifgt:
                     {
                         _ConvertPush(0, src, to);//和0比较
-                        _Convert1by1(VM.OpCode.LT, null, to);
+                        _Convert1by1(VM.OpCode.GT, null, to);
                         var code = _Convert1by1(VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
                         code.needfix = true;
                         code.srcaddr = src.addr + src.arg1;
@@ -578,7 +588,7 @@ namespace Neo.Compiler.JVM
                 case javaloader.NormalizedByteCode.__ifge:
                     {
                         _ConvertPush(0, src, to);//和0比较
-                        _Convert1by1(VM.OpCode.LTE, null, to);
+                        _Convert1by1(VM.OpCode.GTE, null, to);
                         var code = _Convert1by1(VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
                         code.needfix = true;
                         code.srcaddr = src.addr + src.arg1;
@@ -619,7 +629,7 @@ namespace Neo.Compiler.JVM
                 case javaloader.NormalizedByteCode.__iand:
                 case javaloader.NormalizedByteCode.__land:
                     _Convert1by1(VM.OpCode.AND, src, to);
-                        break;
+                    break;
                 case javaloader.NormalizedByteCode.__ior:
                 case javaloader.NormalizedByteCode.__lor:
                     _Convert1by1(VM.OpCode.OR, src, to);
@@ -655,7 +665,7 @@ namespace Neo.Compiler.JVM
                     break;
 
                 case javaloader.NormalizedByteCode.__new:
-                    _ConvertNew(method, src, to);
+                    skipcount = _ConvertNew(method, src, to);
 
                     break;
                 //    case CodeEx.Neg:

@@ -581,6 +581,13 @@ namespace Neo.Compiler.MSIL
                     _Convert1by1(VM.OpCode.ROLL, null, to);
                     _Convert1by1(VM.OpCode.SETITEM, null, to);
                     return 0;
+                } 
+                else if(src.tokenMethod== "System.UInt32 <PrivateImplementationDetails>::ComputeStringHash(System.String)")
+                {
+                    var t = Type.GetType("<PrivateImplementationDetails>");
+
+                    _Convert1by1(VM.OpCode.CSHARPSTRHASH32, src, to);
+                    return 0;
                 }
                 else
                 {
