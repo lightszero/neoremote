@@ -230,13 +230,13 @@ namespace Neo.Compiler.JVM
                     _Convert1by1(VM.OpCode.DROP, src, to);
                     return 0;
                 }
-                else if(name== "java.math.BigInteger::<init>")
+                else if (name == "java.math.BigInteger::<init>")
                 {//do nothing
                     if (c.Signature == "([B)V")
                     {
                         return 0;
                     }
-                    else if(c.Signature== "(Ljava/lang/String;)V")
+                    else if (c.Signature == "(Ljava/lang/String;)V")
                     {
                         throw new Exception("not support new BigInteger(string)");
                     }
@@ -246,7 +246,7 @@ namespace Neo.Compiler.JVM
                     _Convert1by1(VM.OpCode.ADD, src, to);
                     return 0;
                 }
-                else if(name== "java.math.BigInteger::subtract")
+                else if (name == "java.math.BigInteger::subtract")
                 {
                     _Convert1by1(VM.OpCode.SUB, src, to);
                     return 0;
@@ -284,8 +284,10 @@ namespace Neo.Compiler.JVM
                 else if (name == "java.math.BigInteger::valueOf" ||
                     name == "java.math.BigInteger::intValue" ||
                     name == "java.lang.Boolean::valueOf" ||
-                    name == "java.lang.Character::valueOf"||
-                    name == "java.lang.String::valueOf")
+                    name == "java.lang.Character::valueOf" ||
+                    name == "java.lang.String::valueOf" ||
+                    name == "java.lang.Long::valueOf" ||
+                    name == "java.math.BigInteger::toByteArray")
                 {
                     //donothing
                     return 0;
@@ -306,16 +308,16 @@ namespace Neo.Compiler.JVM
                     _Convert1by1(VM.OpCode.SUBSTR, null, to);
                     return 0;
                 }
-                else if(name== "java.lang.String::length")
+                else if (name == "java.lang.String::length")
                 {
                     _Convert1by1(VM.OpCode.SIZE, null, to);
                     return 0;
                 }
-                else if(c.Class== "java.lang.StringBuilder")
+                else if (c.Class == "java.lang.StringBuilder")
                 {
                     return _ConvertStringBuilder(c.Name, null, to);
                 }
-                else  if(name== "java.util.Arrays::equals")
+                else if (name == "java.util.Arrays::equals")
                 {
                     _Convert1by1(VM.OpCode.EQUAL, null, to);
                     return 0;
@@ -414,7 +416,7 @@ namespace Neo.Compiler.JVM
 
             //移除上一条指令
             to.body_Codes.Remove(code.addr);
-            this.addr--;
+            this.addr = code.addr;
 
             OpCode next = src;
             int dupcount = 0;
@@ -463,16 +465,16 @@ namespace Neo.Compiler.JVM
         }
         private int _ConvertNew(JavaMethod method, OpCode src, AntsMethod to)
         {
-            var c =            method.DeclaringType.classfile.constantpool[src.arg1] as javaloader.ClassFile.ConstantPoolItemClass;
-            if(c.Name== "java.lang.StringBuilder")
+            var c = method.DeclaringType.classfile.constantpool[src.arg1] as javaloader.ClassFile.ConstantPoolItemClass;
+            if (c.Name == "java.lang.StringBuilder")
             {
                 _ConvertPush(1, src, to);
                 _Insert1(VM.OpCode.NEWARRAY, "", to);
             }
-            else if(c.Name== "java.math.BigInteger")
+            else if (c.Name == "java.math.BigInteger")
             {
                 var next = method.GetNextCodeAddr(src.addr);
-                if(method.body_Codes[next].code== javaloader.NormalizedByteCode.__dup)
+                if (method.body_Codes[next].code == javaloader.NormalizedByteCode.__dup)
                 {
                     return 1;
                 }
@@ -489,7 +491,7 @@ namespace Neo.Compiler.JVM
         }
         private int _ConvertStringBuilder(string callname, OpCode src, AntsMethod to)
         {
-            if(callname=="<init>")
+            if (callname == "<init>")
             {
                 _Convert1by1(VM.OpCode.SWAP, null, to);
                 _Convert1by1(VM.OpCode.DUP, null, to);
@@ -500,7 +502,7 @@ namespace Neo.Compiler.JVM
                 _Convert1by1(VM.OpCode.SETITEM, null, to);
                 return 0;
             }
-            if(callname=="append")
+            if (callname == "append")
             {
                 _Convert1by1(VM.OpCode.SWAP, null, to);//把对象数组换上来
                 _Convert1by1(VM.OpCode.DUP, null, to);
@@ -508,7 +510,7 @@ namespace Neo.Compiler.JVM
                 _Convert1by1(VM.OpCode.PICKITEM, null, to);
 
                 _ConvertPush(2, null, to);
-                _Convert1by1(VM.OpCode.ROLL,null,to);
+                _Convert1by1(VM.OpCode.ROLL, null, to);
                 _Convert1by1(VM.OpCode.SWAP, null, to);//把对象数组换上来
                 _Convert1by1(VM.OpCode.CAT, null, to);
 
@@ -517,7 +519,7 @@ namespace Neo.Compiler.JVM
                 _Convert1by1(VM.OpCode.SETITEM, null, to);
                 return 0;
             }
-            if(callname== "toString")
+            if (callname == "toString")
             {
                 _ConvertPush(0, null, to);
                 _Convert1by1(VM.OpCode.PICKITEM, null, to);

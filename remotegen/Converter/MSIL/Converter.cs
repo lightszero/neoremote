@@ -300,7 +300,10 @@ namespace Neo.Compiler.MSIL
         }
         static int pushdata1bytes2int(byte[] data)
         {
-            var n = BitConverter.ToInt32(data, 1);
+            byte[] target = new byte[4];
+            for (var i = 1; i < data.Length; i++)
+                target[i - 1] = data[i];
+            var n = BitConverter.ToInt32(target, 0);
             return n;
         }
         private void ConvertAddrInMethod(AntsMethod to)
@@ -444,6 +447,11 @@ namespace Neo.Compiler.MSIL
                 case CodeEx.Ldarga:
                 case CodeEx.Ldarga_S:
                     _ConvertLdArg(src, to, src.tokenI32);
+                    break;
+
+                case CodeEx.Starg_S:
+                case CodeEx.Starg:
+                    _ConvertStArg(src, to, src.tokenI32);
                     break;
                 //需要地址轉換的情況
                 case CodeEx.Br:

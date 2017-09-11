@@ -120,7 +120,19 @@ namespace Neo.Compiler.MSIL
             ////pick
             //_Convert1by1(VM.OpCode.PICK, null, to);
         }
+        private void _ConvertStArg(OpCode src, AntsMethod to, int pos)
+        {
+            //get array
+            _Convert1by1(VM.OpCode.DUPFROMALTSTACK, src, to);
+            //set i
+            _ConvertPush(pos, null, to);//翻转取参数顺序
 
+            //got v to top
+            _ConvertPush(2, null, to);
+            _Convert1by1(VM.OpCode.ROLL, null, to);
+
+            _Convert1by1(VM.OpCode.SETITEM, null, to);
+        }
         public bool IsSysCall(Mono.Cecil.MethodDefinition defs, out string name)
         {
             if (defs == null)
@@ -581,8 +593,8 @@ namespace Neo.Compiler.MSIL
                     _Convert1by1(VM.OpCode.ROLL, null, to);
                     _Convert1by1(VM.OpCode.SETITEM, null, to);
                     return 0;
-                } 
-                else if(src.tokenMethod== "System.UInt32 <PrivateImplementationDetails>::ComputeStringHash(System.String)")
+                }
+                else if (src.tokenMethod == "System.UInt32 <PrivateImplementationDetails>::ComputeStringHash(System.String)")
                 {
                     var t = Type.GetType("<PrivateImplementationDetails>");
 
@@ -729,7 +741,7 @@ namespace Neo.Compiler.MSIL
 
                 //移除上一条指令
                 to.body_Codes.Remove(code.addr);
-                this.addr--;
+                this.addr = code.addr;
                 if (code.bytes != null)
                     this.addr -= code.bytes.Length;
 
