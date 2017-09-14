@@ -135,8 +135,17 @@ namespace Neo.Compiler.JVM
 
             for(var i=0;i<from.paramTypes.Count;i++)
             {
+                int pos = 0;
+                if(from.method.IsStatic)
+                {
+                    pos = from.argTable[i];
+                }
+                else
+                {//非静态0号是this
+                    pos = from.argTable[i + 1];
+                }
                 _Insert1(VM.OpCode.DUPFROMALTSTACK, "init param:" + i, to);
-                _InsertPush(from.argTable[i], "", to);
+                _InsertPush(pos, "", to);
                 _InsertPush(2, "", to);
                 _Insert1(VM.OpCode.ROLL, "", to);
                 _Insert1(VM.OpCode.SETITEM, "", to);

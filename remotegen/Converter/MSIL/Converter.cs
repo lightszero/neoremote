@@ -110,25 +110,6 @@ namespace Neo.Compiler.MSIL
             string mainmethod = "";
             foreach (var key in outModule.mapMethods.Keys)
             {
-                if (key.Contains("::Verify("))
-                {
-                    var m = outModule.mapMethods[key];
-                    foreach (var l in this.methodLink)
-                    {
-                        if (l.Value == m)
-                        {
-                            var srcm = l.Key.method;
-                            if (srcm.DeclaringType.BaseType.Name == "VerificationCode" && srcm.ReturnType.FullName == "System.Boolean")
-                            {
-                                logger.Log("找到函数入口点:" + key);
-                                if (mainmethod != "")
-                                    throw new Exception("拥有多个函数入口点，请检查");
-                                mainmethod = key;
-
-                            }
-                        }
-                    }
-                }
                 if (key.Contains("::Main("))
                 {
                     var m = outModule.mapMethods[key];
@@ -137,7 +118,7 @@ namespace Neo.Compiler.MSIL
                         if (l.Value == m)
                         {
                             var srcm = l.Key.method;
-                            if (srcm.DeclaringType.BaseType.Name == "FunctionCode")
+                            if (srcm.DeclaringType.BaseType.Name == "SmartContract")
                             {
                                 logger.Log("找到函数入口点:" + key);
                                 if (mainmethod != "")

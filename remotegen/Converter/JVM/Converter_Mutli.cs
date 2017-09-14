@@ -7,7 +7,7 @@ namespace Neo.Compiler.JVM
 {
     public partial class ModuleConverter
     {
-        private void _ConvertStLoc(OpCode src, AntsMethod to, int pos)
+        private void _ConvertStLoc(JavaMethod method, OpCode src, AntsMethod to, int pos)
         {
             //push d
             var c = _Convert1by1(VM.OpCode.DUPFROMALTSTACK, src, to);
@@ -22,8 +22,12 @@ namespace Neo.Compiler.JVM
             _Insert1(VM.OpCode.ROLL, "", to);
             _Insert1(VM.OpCode.SETITEM, "", to);
         }
-        private void _ConvertLdLoc(OpCode src, AntsMethod to, int pos)
+        private void _ConvertLdLoc(JavaMethod method, OpCode src, AntsMethod to, int pos)
         {
+            if (method.method.IsStatic == false && pos == 0)
+            {//忽略非静态函数取this的操作
+                return;
+            }
             //push d
             var c = _Convert1by1(VM.OpCode.DUPFROMALTSTACK, src, to);
             if (c.debugcode == null)
@@ -37,10 +41,10 @@ namespace Neo.Compiler.JVM
             //pick
             _Convert1by1(VM.OpCode.PICKITEM, null, to);
         }
-        private void _ConvertLdLocA(OpCode src, AntsMethod to, int pos)
-        {
-            _ConvertPush(pos, src, to);
-        }
+        //private void _ConvertLdLocA(OpCode src, AntsMethod to, int pos)
+        //{
+        //    _ConvertPush(pos, src, to);
+        //}
         private void _ConvertLdArg(OpCode src, AntsMethod to, int pos)
         {
             //push d
@@ -74,7 +78,7 @@ namespace Neo.Compiler.JVM
                 {
 
                     object[] op = method.method.Annotations[0] as object[];
-                    if (op[1] as string == "LAntShares/SmartContract/Framework/OpCode;")
+                    if (op[1] as string == "Lorg/neo/smartcontract/framework/OpCode;")
                     {
                         if (op[2] as string == "value")
                         {
@@ -100,7 +104,7 @@ namespace Neo.Compiler.JVM
                 {
 
                     object[] op = method.method.Annotations[0] as object[];
-                    if (op[1] as string == "LAntShares/SmartContract/Framework/Syscall;")
+                    if (op[1] as string == "Lorg/neo/smartcontract/framework/Syscall;")
                     {
                         if (op[2] as string == "value")
                         {
@@ -126,14 +130,18 @@ namespace Neo.Compiler.JVM
                 {
 
                     object[] op = method.method.Annotations[0] as object[];
-                    if (op[1] as string == "LAntShares/SmartContract/Framework/Appcall;")
+                    if (op[1] as string == "Lorg/neo/smartcontract/framework/Appcall;")
                     {
-                        if (op[2] as string == "HexStr")
+                        if (op[2] as string == "value")
                         {
                             var info = op[3] as string;
-                            byte[] bytes = new byte[info.Length / 2];
+                            if (info.Length < 40)
+                            {
+                                throw new Exception("appcall hash is too short.");
+                            }
+                            byte[] bytes = new byte[20];
 
-                            for (var i = 0; i < info.Length / 2; i++)
+                            for (var i = 0; i < 20; i++)
                             {
                                 bytes[i] = byte.Parse(info.Substring(i * 2, 2), System.Globalization.NumberStyles.AllowHexSpecifier);
                             }
@@ -322,6 +330,12 @@ namespace Neo.Compiler.JVM
                     _Convert1by1(VM.OpCode.EQUAL, null, to);
                     return 0;
                 }
+                else if (name == "kotlin.jvm.internal.Intrinsics::checkParameterIsNotNull")
+                {
+                    _Convert1by1(VM.OpCode.DROP, null, to);
+                    _Convert1by1(VM.OpCode.DROP, null, to);
+                    return 0;
+                }
             }
 
             if (calltype == 0)
@@ -330,39 +344,47 @@ namespace Neo.Compiler.JVM
             }
             var pcount = paramTypes.Count;
 
-            _Convert1by1(VM.OpCode.NOP, src, to);
-            if (pcount <= 1)
+            if (calltype == 2)
             {
-            }
-            else if (pcount == 2)
-            {
-                _Insert1(VM.OpCode.SWAP, "swap 2 param", to);
-            }
-            else if (pcount == 3)
-            {
-                _InsertPush(2, "swap 0 and 2 param", to);
-                _Insert1(VM.OpCode.XSWAP, "", to);
+                //opcode call 
             }
             else
-            {
-                for (var i = 0; i < pcount / 2; i++)
+            {//翻转参数入栈顺序
+                _Convert1by1(VM.OpCode.NOP, src, to);
+                if (pcount <= 1)
                 {
-                    int saveto = (pcount - 1 - i);
-                    _InsertPush(saveto, "load" + saveto, to);
-                    _Insert1(VM.OpCode.PICK, "", to);
 
-                    _InsertPush(i + 1, "load" + i + 1, to);
-                    _Insert1(VM.OpCode.PICK, "", to);
-
-
-                    _InsertPush(saveto + 2, "save to" + saveto + 2, to);
+                }
+                else if (pcount == 2)
+                {
+                    _Insert1(VM.OpCode.SWAP, "swap 2 param", to);
+                }
+                else if (pcount == 3)
+                {
+                    _InsertPush(2, "swap 0 and 2 param", to);
                     _Insert1(VM.OpCode.XSWAP, "", to);
-                    _Insert1(VM.OpCode.DROP, "", to);
+                }
+                else
+                {
+                    for (var i = 0; i < pcount / 2; i++)
+                    {
+                        int saveto = (pcount - 1 - i);
+                        _InsertPush(saveto, "load" + saveto, to);
+                        _Insert1(VM.OpCode.PICK, "", to);
 
-                    _InsertPush(i + 1, "save to" + i + 1, to);
-                    _Insert1(VM.OpCode.XSWAP, "", to);
-                    _Insert1(VM.OpCode.DROP, "", to);
+                        _InsertPush(i + 1, "load" + i + 1, to);
+                        _Insert1(VM.OpCode.PICK, "", to);
 
+
+                        _InsertPush(saveto + 2, "save to" + saveto + 2, to);
+                        _Insert1(VM.OpCode.XSWAP, "", to);
+                        _Insert1(VM.OpCode.DROP, "", to);
+
+                        _InsertPush(i + 1, "save to" + i + 1, to);
+                        _Insert1(VM.OpCode.XSWAP, "", to);
+                        _Insert1(VM.OpCode.DROP, "", to);
+
+                    }
                 }
             }
             if (calltype == 1)
@@ -393,6 +415,7 @@ namespace Neo.Compiler.JVM
                 _Convert1by1(VM.OpCode.APPCALL, null, to, callhash);
 
             }
+
             return 0;
         }
 

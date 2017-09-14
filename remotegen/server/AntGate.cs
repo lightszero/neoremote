@@ -14,7 +14,7 @@ namespace hhgate
 {
     public class AntGateway : CustomServer.IParser
     {
-        public const string ver = "0.051😂";
+        public const string ver = "0.060😂";
 
         public async Task HandleRequest(IOwinContext context, string rootpath, string relativePath)
         {
@@ -327,7 +327,7 @@ namespace hhgate
                 System.IO.Directory.CreateDirectory(dictname);
                 string filename = System.IO.Path.Combine(dictname, classname + ".java");
                 System.IO.File.WriteAllText(filename, code);
-                string jarfile = "AntShares.SmartContract.Framework.jar";
+                string jarfile = "Neo.SmartContract.Framework.jar";
                 System.IO.File.Copy(jarfile, System.IO.Path.Combine(dictname, jarfile));
 
                 //编译

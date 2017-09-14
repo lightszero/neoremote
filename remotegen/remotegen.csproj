@@ -271,6 +271,9 @@
     <Content Include="Neo.SmartContract.Framework.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Neo.SmartContract.Framework.jar">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="www.ico.la_59d23efd5db4eaf3411c75fc8a58f69b_32X32.ico" />
   </ItemGroup>
   <ItemGroup />

@@ -23,11 +23,11 @@ namespace Neo.Compiler.JVM
         public void LoadJar(string filename, string codepath = null)
         {
             string f = System.IO.Path.GetFileName(filename);
-            bool bskip = false;
-            if (f == "AntShares.SmartContract.Framework.jar")
-            {
-                bskip = true;
-            }
+            //不该基于文件名，而是类的名字
+            //if (f == "org.neo.smartcontract.framework.jar")
+            //{
+            //    bskip = true;
+            //}
             using (var zipStream = new ZipInputStream(File.OpenRead(filename)))
             {
                 ZipEntry ent = null;
@@ -51,7 +51,8 @@ namespace Neo.Compiler.JVM
                             }
                             data = ms.ToArray();
                         }
-                       var cc= LoadClassByBytes(data, codepath);
+                        var cc = LoadClassByBytes(data, codepath);
+                        var bskip = cc.classfile.Name.IndexOf("org.neo.") == 0;
                         cc.skip = bskip;
                     }
 
@@ -83,9 +84,9 @@ namespace Neo.Compiler.JVM
                 if (m.Annotations != null)
                 {
                     object[] info = m.Annotations[0] as object[];
-                    if (info[1] as string == "LAntShares/SmartContract/Framework/Appcall;" ||
-                        info[1] as string == "LAntShares/SmartContract/Framework/Syscall;" |
-                        info[1] as string == "LAntShares/SmartContract/Framework/Opcall;")
+                    if (info[1] as string == "Lorg/neo/smartcontract/framework/Appcall;" ||
+                        info[1] as string == "Lorg/neo/smartcontract/framework/Syscall;" |
+                        info[1] as string == "Lorg/neo/smartcontract/framework/OpCode;")
                     {
                         //continue;
                         bskip = true;
@@ -136,7 +137,7 @@ namespace Neo.Compiler.JVM
                     if (ind >= 0)
                         this.argTable[ind] = i;
                 }
-            scanTypes(method.Signature,out this.returnType,this.paramTypes);
+            scanTypes(method.Signature, out this.returnType, this.paramTypes);
             Dictionary<int, string> local = new Dictionary<int, string>();
 
             if (this.method.LocalVariableTableAttribute != null)
@@ -236,7 +237,7 @@ namespace Neo.Compiler.JVM
             {
                 return "double";
             }
-            else if(sign[i]=='C')
+            else if (sign[i] == 'C')
             {
                 return "char";
             }
@@ -254,7 +255,7 @@ namespace Neo.Compiler.JVM
                 throw new Exception("not parsed sign.");
             }
         }
-        public static void scanTypes(string sign,out string returnType,List<string> paramTypes)
+        public static void scanTypes(string sign, out string returnType, List<string> paramTypes)
         {
             returnType = "";
             bool forreturn = false;
