@@ -1,5 +1,5 @@
 ﻿using Neo.SmartContract.Framework;
-using Neo.SmartContract.Framework.Services.AntShares;
+using Neo.SmartContract.Framework.Services.Neo;
 using Neo.SmartContract.Framework.Services.System;
 using System;
 using System.Collections.Generic;
