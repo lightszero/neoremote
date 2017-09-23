@@ -40,7 +40,7 @@ window.onload = () => {
         'using Neo.SmartContract.Framework.Services.Neo;',
         'using Neo.SmartContract.Framework.Services.System;',
         '',
-        'class A : FunctionCode',
+        'class A : SmartContract',
         '{',
         '    public static int Main() ',
         '    {',

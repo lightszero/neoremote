@@ -98,6 +98,15 @@ namespace Neo.Compiler.MSIL
 
                     //try
                     {
+                        byte[] outcall;string name;
+                        if (IsAppCall(m.Value.method, out outcall))
+                            continue;
+                        if (IsNonCall(m.Value.method))
+                            continue;
+                        if (IsOpCall(m.Value.method, out name))
+                            continue;
+                        if (IsSysCall(m.Value.method, out name))
+                            continue;
                         this.ConvertMethod(m.Value, nm);
                     }
                     //catch (Exception err)
@@ -297,19 +306,20 @@ namespace Neo.Compiler.MSIL
 
                     )
                 {
-                    if (c.code == VM.OpCode.SWITCH)
-                    {
-                        for (var i = 0; i < c.srcaddrswitch.Length; i++)
-                        {
-                            var addr = addrconv[c.srcaddrswitch[i]];
-                            Int16 addroff = (Int16)(addr - c.addr);
-                            var bs = BitConverter.GetBytes(addroff);
-                            c.bytes[i * 2 + 2] = bs[0];
-                            c.bytes[i * 2 + 2 + 1] = bs[1];
-                            c.needfix = false;
-                        }
-                    }
-                    else
+                    //need neo.vm update.
+                    //if (c.code == VM.OpCode.SWITCH)
+                    //{
+                    //    for (var i = 0; i < c.srcaddrswitch.Length; i++)
+                    //    {
+                    //        var addr = addrconv[c.srcaddrswitch[i]];
+                    //        Int16 addroff = (Int16)(addr - c.addr);
+                    //        var bs = BitConverter.GetBytes(addroff);
+                    //        c.bytes[i * 2 + 2] = bs[0];
+                    //        c.bytes[i * 2 + 2 + 1] = bs[1];
+                    //        c.needfix = false;
+                    //    }
+                    //}
+                    //else
                     {
                         var addr = addrconv[c.srcaddr];
                         Int16 addroff = (Int16)(addr - c.addr);
@@ -448,18 +458,19 @@ namespace Neo.Compiler.MSIL
                     break;
                 case CodeEx.Switch:
                     {
-                        var addrdata = new byte[src.tokenAddr_Switch.Length * 2 + 2];
-                        var shortaddrcount = (UInt16)src.tokenAddr_Switch.Length;
-                        var data = BitConverter.GetBytes(shortaddrcount);
-                        addrdata[0] = data[0];
-                        addrdata[1] = data[1];
-                        var code = _Convert1by1(VM.OpCode.SWITCH, src, to, addrdata);
-                        code.needfix = true;
-                        code.srcaddrswitch = new int[shortaddrcount];
-                        for (var i = 0; i < shortaddrcount; i++)
-                        {
-                            code.srcaddrswitch[i] = src.tokenAddr_Switch[i];
-                        }
+                        throw new Exception("need neo.VM update.");
+                        //var addrdata = new byte[src.tokenAddr_Switch.Length * 2 + 2];
+                        //var shortaddrcount = (UInt16)src.tokenAddr_Switch.Length;
+                        //var data = BitConverter.GetBytes(shortaddrcount);
+                        //addrdata[0] = data[0];
+                        //addrdata[1] = data[1];
+                        //var code = _Convert1by1(VM.OpCode.SWITCH, src, to, addrdata);
+                        //code.needfix = true;
+                        //code.srcaddrswitch = new int[shortaddrcount];
+                        //for (var i = 0; i < shortaddrcount; i++)
+                        //{
+                        //    code.srcaddrswitch[i] = src.tokenAddr_Switch[i];
+                        //}
                     }
                     break;
                 case CodeEx.Brtrue:

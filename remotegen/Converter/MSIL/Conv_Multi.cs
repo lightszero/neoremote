@@ -596,10 +596,9 @@ namespace Neo.Compiler.MSIL
                 }
                 else if (src.tokenMethod == "System.UInt32 <PrivateImplementationDetails>::ComputeStringHash(System.String)")
                 {
-                    var t = Type.GetType("<PrivateImplementationDetails>");
-
-                    _Convert1by1(VM.OpCode.CSHARPSTRHASH32, src, to);
-                    return 0;
+                    throw new Exception("需要neo.vm nuget更新以后，这个才可以放开，就可以处理 string switch了。");
+                    //_Convert1by1(VM.OpCode.CSHARPSTRHASH32, src, to);
+                    //return 0;
                 }
                 else
                 {

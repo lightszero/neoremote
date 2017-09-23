@@ -1,6 +1,6 @@
-﻿using AntShares.SmartContract.Framework;
-using AntShares.SmartContract.Framework.Services.AntShares;
-using AntShares.SmartContract.Framework.Services.System;
+﻿using Neo.SmartContract.Framework;
+using Neo.SmartContract.Framework.Services.AntShares;
+using Neo.SmartContract.Framework.Services.System;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace remotegen
 {
-    class tcode : FunctionCode
+    class tcode :SmartContract
     {
         public static int Main()
         {
