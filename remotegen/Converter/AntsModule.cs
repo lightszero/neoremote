@@ -31,6 +31,7 @@ namespace Neo.Compiler
         }
         public string mainMethod;
         public Dictionary<string, AntsMethod> mapMethods = new Dictionary<string, AntsMethod>();
+        public Dictionary<string, AntsEvent> mapEvents = new Dictionary<string, AntsEvent>();
         //public Dictionary<string, byte[]> codes = new Dictionary<string, byte[]>();
         //public byte[] GetScript(byte[] script_hash)
         //{
@@ -87,6 +88,7 @@ namespace Neo.Compiler
     {
         public string _namespace;
         public string name;
+        public string displayName;
         public List<AntsParam> paramtypes = new List<AntsParam>();
         public string returntype;
         public bool isPublic = true;
@@ -138,6 +140,15 @@ namespace Neo.Compiler
         //}
         public string lastsfieldname;
     }
+    public class AntsEvent
+    {
+        public string _namespace;
+        public string name;
+        public string displayName;
+        public List<AntsParam> paramtypes = new List<AntsParam>();
+        public string returntype;
+    }
+
     public class AntsCode
     {
         public VM.OpCode code = VM.OpCode.NOP;
@@ -148,6 +159,7 @@ namespace Neo.Compiler
         public int debugILAddr = -1;
         public string debugILCode;
         public bool needfix = false;//lateparse tag
+        public bool needfixfunc = false;
         public int srcaddr;
         public int[] srcaddrswitch;
         public string srcfunc;

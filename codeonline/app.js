@@ -51,8 +51,8 @@ window.onload = function () {
     ].join('\n');
     var javacode = [
         'package hi;',
-        'import AntShares.SmartContract.Framework.FunctionCode;',
-        'public class go extends FunctionCode {',
+        'import org.neo.smartcontract.framework.*;',
+        'public class go extends SmartContract {',
         '    public static int Main() ',
         '    {',
         '        return 1;',

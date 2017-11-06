@@ -320,7 +320,20 @@ namespace Neo.Compiler.JVM
         //        }
         //    }
         //}
-
+        public int GetLastCodeAddr(int srcaddr)
+        {
+            int last = -1;
+            foreach (var key in this.body_Codes.Keys)
+            {
+                if (key == srcaddr)
+                {
+                    
+                    return last;
+                }
+                last = key;
+            }
+            return last;
+        }
         public int GetNextCodeAddr(int srcaddr)
         {
             bool bskip = false;
@@ -396,7 +409,7 @@ namespace Neo.Compiler.JVM
             this.arg1 = ins.Arg1;
             this.arg2 = ins.Arg2;
             this.addr = ins.PC;
-            if (method.method.LineNumberTableAttribute.TryGetValue(this.addr, out this.debugline) == false)
+            if (method.method.LineNumberTableAttribute==null||method.method.LineNumberTableAttribute.TryGetValue(this.addr, out this.debugline) == false)
             {
                 this.debugline = -1;
             }

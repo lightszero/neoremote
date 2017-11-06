@@ -46,15 +46,15 @@ namespace Neo.Compiler.MSIL
                         continue;
 
                     mapType[t.FullName] = new ILType(this, t);
-                    if(t.HasNestedTypes)
+                    if (t.HasNestedTypes)
                     {
-                        foreach(var nt in t.NestedTypes)
+                        foreach (var nt in t.NestedTypes)
                         {
                             mapType[nt.FullName] = new ILType(this, nt);
 
                         }
                     }
-                   
+
                 }
             }
         }
@@ -63,14 +63,14 @@ namespace Neo.Compiler.MSIL
     public class ILType
     {
         Mono.Cecil.TypeDefinition type;
-        public Dictionary<string, string> fields = new Dictionary<string, string>();
+        public Dictionary<string, ILField> fields = new Dictionary<string, ILField>();
         public Dictionary<string, ILMethod> methods = new Dictionary<string, ILMethod>();
         public ILType(ILModule module, Mono.Cecil.TypeDefinition type)
         {
             this.type = type;
             foreach (Mono.Cecil.FieldDefinition f in type.Fields)
             {
-                this.fields.Add(f.Name, f.FieldType.FullName);
+                this.fields.Add(f.Name, new ILField(this, f));
             }
             foreach (Mono.Cecil.MethodDefinition m in type.Methods)
             {
@@ -89,6 +89,58 @@ namespace Neo.Compiler.MSIL
         }
 
     }
+
+    public class ILField
+    {
+        public ILField(ILType type, Mono.Cecil.FieldDefinition field)
+        {
+            this.type = field.FieldType.FullName;
+            this.name = field.Name;
+            this.displayName = this.name;
+            this.field = field;
+            foreach (var ev in field.DeclaringType.Events)
+            {
+                if (ev.Name == field.Name && ev.EventType.FullName == field.FieldType.FullName)
+                {
+                    this.isEvent = true;
+                    Mono.Collections.Generic.Collection<Mono.Cecil.CustomAttribute> ca = ev.CustomAttributes;
+                    foreach (var attr in ca)
+                    {
+                        if (attr.AttributeType.Name == "DisplayNameAttribute")
+                        {
+                            this.displayName = (string)attr.ConstructorArguments[0].Value;
+                        }
+                    }
+                    var eventtype = field.FieldType as Mono.Cecil.TypeDefinition;
+                    if (eventtype == null) eventtype = field.FieldType.Resolve();
+                    foreach (var m in eventtype.Methods)
+                    {
+                        if (m.Name == "Invoke")
+                        {
+                            this.returntype = m.ReturnType.FullName;
+                            foreach (var src in m.Parameters)
+                            {
+                                this.paramtypes.Add(new AntsParam(src.Name, src.ParameterType.FullName));
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+        public bool isEvent = false;
+        public string type;
+        public string name;
+        public string displayName;
+        public string returntype;
+        public List<AntsParam> paramtypes = new List<AntsParam>();
+        public override string ToString()
+        {
+            return type;
+        }
+        public Mono.Cecil.FieldDefinition field;
+    }
+
     public class ILMethod
     {
         public ILMethod(ILType type, Mono.Cecil.MethodDefinition method)

@@ -58,6 +58,7 @@ namespace Neo.Compiler.JVM
                     if (m.Key[0] == '<') continue;//系統函數不要
                     AntsMethod nm = new AntsMethod();
                     nm.name = c.classfile.Name + "::" + m.Key;
+                    nm.displayName = m.Key;
                     nm.isPublic = m.Value.method.IsPublic;
                     this.methodLink[m.Value] = nm;
                     outModule.mapMethods[nm.name] = nm;
@@ -166,11 +167,12 @@ namespace Neo.Compiler.JVM
 
             foreach (var c in this.outModule.total_Codes.Values)
             {
-                if (c.needfix)
+                if (c.needfixfunc)
                 {//需要地址转换
                     var addrfunc = this.outModule.mapMethods[c.srcfunc].funcaddr;
                     Int16 addrconv = (Int16)(addrfunc - c.addr);
                     c.bytes = BitConverter.GetBytes(addrconv);
+                    c.needfixfunc = false;
                 }
             }
         }
@@ -257,11 +259,7 @@ namespace Neo.Compiler.JVM
         {
             foreach (var c in to.body_Codes.Values)
             {
-                if (c.needfix &&
-
-                    c.code != VM.OpCode.CALL //call 要做函数间的转换
-
-                    )
+                if (c.needfix)
                 {
 
                     var addr = addrconv[c.srcaddr];
@@ -288,12 +286,16 @@ namespace Neo.Compiler.JVM
                 case javaloader.NormalizedByteCode.__dreturn:
                 case javaloader.NormalizedByteCode.__areturn:
                     //        //return 在外面特殊处理了
-                    _Insert1(VM.OpCode.RET, null, to);
+                    _Convert1by1(VM.OpCode.RET, src, to);
                     break;
 
                 case javaloader.NormalizedByteCode.__pop:
                     _Convert1by1(VM.OpCode.DROP, src, to);
                     break;
+                case javaloader.NormalizedByteCode.__pop2://pop2 这个指令有些鬼
+                    _Convert1by1(VM.OpCode.DROP, src, to);
+                    break;
+
                 case javaloader.NormalizedByteCode.__getstatic:
                     {
                         _Convert1by1(VM.OpCode.NOP, src, to);
@@ -357,6 +359,11 @@ namespace Neo.Compiler.JVM
                 case javaloader.NormalizedByteCode.__lconst_0:
                     _ConvertPush(0, src, to);
                     break;
+
+                case javaloader.NormalizedByteCode.__aconst_null:
+                    _ConvertPush(0, src, to);
+                    break;
+
                 case javaloader.NormalizedByteCode.__newarray:
                 case javaloader.NormalizedByteCode.__anewarray:
                     skipcount = _ConvertNewArray(method, src, to);
@@ -371,6 +378,10 @@ namespace Neo.Compiler.JVM
                 case javaloader.NormalizedByteCode.__iload:
                 case javaloader.NormalizedByteCode.__lload:
                     _ConvertLdLoc(method, src, to, src.arg1);
+                    break;
+                case javaloader.NormalizedByteCode.__baload:
+                    _ConvertPush(1, src, to);
+                    _Convert1by1(VM.OpCode.SUBSTR, null, to);
                     break;
                 case javaloader.NormalizedByteCode.__aaload:
                 case javaloader.NormalizedByteCode.__iaload:
@@ -597,11 +608,11 @@ namespace Neo.Compiler.JVM
                     break;
                 case javaloader.NormalizedByteCode.__ifnonnull:
                     {
-                        _ConvertPush(0, src, to);//和0比较
-                        _Convert1by1(VM.OpCode.NUMNOTEQUAL, null, to);
-                        var code = _Convert1by1(VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
-                        code.needfix = true;
-                        code.srcaddr = src.addr + src.arg1;
+                        //实际上ifnonnull 有可能是kotlin自动插入的代码，他有个套路
+                        //ifnonnull 跳过 一个throw，isnon 就 throw
+                        //Neo.VM实际上没有null这个类型，要识别出这个套路，编译出更合理的代码
+                        skipcount = _ConvertIfNonNull(method, src, to);
+ 
                     }
                     break;
                 //    //Stack

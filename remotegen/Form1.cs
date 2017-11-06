@@ -26,6 +26,19 @@ namespace remotegen
              };
             this.Invoke(call);
         }
+        public static byte[] Convert(System.IO.Stream dllstream, Neo.Compiler.ILogger logger = null)
+        {
+            var module = new ILModule();
+            module.LoadModule(dllstream, null);
+            if (logger == null)
+            {
+                logger = new DefLogger();
+            }
+            var converter = new ModuleConverter(logger);
+            //有异常的话在 convert 函数中会直接throw 出来
+            var antmodule = converter.Convert(module);
+            return antmodule.Build();
+        }
         private void Form1_Load(object sender, EventArgs e)
         {
             this.Text = "小蚁智能合约远程服务器 v" + hhgate.AntGateway.ver;
@@ -66,7 +79,7 @@ namespace remotegen
                         var st = System.IO.File.OpenRead(r.PathToAssembly);
                         using (st)
                         {
-                            var bs = Converter.Convert(st, this);
+                            var bs = Convert(st, this);
                             if (bs != null)
                             {
                                 Log("测试小蚁编译器正常");

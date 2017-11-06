@@ -282,8 +282,10 @@ namespace Neo.Compiler.JVM
                     //_Convert1by1(VM.OpCode.DEC, src, to);
                     return 0;
                 }
+                // todo: what about java.lang.String::contentEquals?
                 else if (name == "java.math.BigInteger::equals" ||
-                    name == "java.lang.String::equals")
+                    name == "java.lang.String::equals" ||
+                    name == "kotlin.jvm.internal.Intrinsics::areEqual")
                 {
                     _Convert1by1(VM.OpCode.NUMEQUAL, src, to);
                     //_Convert1by1(VM.OpCode.DEC, src, to);
@@ -295,12 +297,16 @@ namespace Neo.Compiler.JVM
                     name == "java.lang.Character::valueOf" ||
                     name == "java.lang.String::valueOf" ||
                     name == "java.lang.Long::valueOf" ||
+                    name == "java.lang.Integer::valueOf" ||
                     name == "java.math.BigInteger::toByteArray")
                 {
                     //donothing
                     return 0;
                 }
-                else if (name == "java.lang.Boolean::booleanValue")
+                else if (name == "java.lang.Boolean::booleanValue" ||
+                    name == "java.lang.Integer::integerValue" ||
+                    name == "java.lang.Long::longValue" ||
+                    name == "java.math.BigInteger::longValue")
                 {
                     _Convert1by1(VM.OpCode.NOP, src, to);
                     return 0;
@@ -325,7 +331,8 @@ namespace Neo.Compiler.JVM
                 {
                     return _ConvertStringBuilder(c.Name, null, to);
                 }
-                else if (name == "java.util.Arrays::equals")
+                else if (name == "java.util.Arrays::equals" ||
+                    name == "kotlin.jvm.internal.Intrinsics::areEqual")
                 {
                     _Convert1by1(VM.OpCode.EQUAL, null, to);
                     return 0;
@@ -334,6 +341,11 @@ namespace Neo.Compiler.JVM
                 {
                     _Convert1by1(VM.OpCode.DROP, null, to);
                     _Convert1by1(VM.OpCode.DROP, null, to);
+                    return 0;
+                }
+                else if (name == "kotlin.jvm.internal.Intrinsics::throwNpe")
+                {
+                    _Convert1by1(VM.OpCode.THROW, src, to);
                     return 0;
                 }
             }
@@ -390,7 +402,7 @@ namespace Neo.Compiler.JVM
             if (calltype == 1)
             {
                 var _c = _Convert1by1(VM.OpCode.CALL, null, to, new byte[] { 5, 0 });
-                _c.needfix = true;
+                _c.needfixfunc = true;
                 _c.srcfunc = name;
                 return 0;
             }
@@ -450,7 +462,39 @@ namespace Neo.Compiler.JVM
             {
                 int n = method.GetNextCodeAddr(next.addr);
                 next = method.body_Codes[n];
-                if (next.code == javaloader.NormalizedByteCode.__dup)
+                if (next.code == javaloader.NormalizedByteCode.__invokestatic)
+                {
+                    var i = method.DeclaringType.classfile.constantpool[next.arg1] as javaloader.ClassFile.ConstantPoolItemMethodref;
+                    var callname = i.Class + "::" + i.Name;
+                    if (callname == "java.lang.Integer::valueOf")
+                    {
+                        //nothing
+                        skipcount++;
+                    }
+                    else
+                    {
+                        throw new Exception("can not parse this new array code chain." + next.code);
+                    }
+                }
+                else if (next.code == javaloader.NormalizedByteCode.__invokevirtual)
+                {
+                    var i = method.DeclaringType.classfile.constantpool[next.arg1] as javaloader.ClassFile.ConstantPoolItemMethodref;
+                    var callname = i.Class + "::" + i.Name;
+                    if (callname == "java.lang.Byte::byteValue")
+                    {
+                        skipcount++;
+                    }
+                    else
+                    {
+                        throw new Exception("can not parse this new array code chain." + next.code);
+                    }
+                }
+                else if (next.code == javaloader.NormalizedByteCode.__checkcast)
+                {
+                    //nothing
+                    skipcount++;
+                }
+                else if (next.code == javaloader.NormalizedByteCode.__dup)
                 {
                     dupcount++;
                     skipcount++;
@@ -510,6 +554,40 @@ namespace Neo.Compiler.JVM
             {
                 throw new Exception("new not supported type." + c.Name);
             }
+            return 0;
+        }
+        private int _ConvertIfNonNull(JavaMethod method, OpCode src, AntsMethod to)
+        {
+            int nm = method.GetLastCodeAddr(src.addr);//上一指令
+            int n = method.GetNextCodeAddr(src.addr);
+            int n2 = method.GetNextCodeAddr(n);
+            var codenext = method.body_Codes[n];
+
+            if (nm >= 0 && n >= 0 && n2 >= 0
+                && method.body_Codes[nm].code == javaloader.NormalizedByteCode.__dup //上一条是dup指令
+                && src.arg1 == n2 - src.addr //刚好跳过throw 指令
+                && codenext.code == javaloader.NormalizedByteCode.__invokestatic
+                )
+            {
+                var cc = method.DeclaringType.classfile.constantpool;
+                var c = cc[codenext.arg1] as javaloader.ClassFile.ConstantPoolItemMethodref;
+                var name = c.Class + "::" + c.Name;
+                if (name == "kotlin.jvm.internal.Intrinsics::throwNpe")
+                {//识别到套路
+                    var _code = to.body_Codes.Last().Value;
+                    //移除上一条指令
+                    to.body_Codes.Remove(_code.addr);
+                    this.addr = _code.addr;
+
+                    return 1;
+                }
+            }
+            var codenextnext = method.body_Codes[n2];
+            _ConvertPush(0, src, to);//和0比较
+            _Convert1by1(VM.OpCode.NUMNOTEQUAL, null, to);
+            var code = _Convert1by1(VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
+            code.needfix = true;
+            code.srcaddr = src.addr + src.arg1;
             return 0;
         }
         private int _ConvertStringBuilder(string callname, OpCode src, AntsMethod to)

@@ -161,6 +161,33 @@ namespace Neo.Compiler.MSIL
 
 
         }
+        public bool IsEntryCall(Mono.Cecil.MethodDefinition defs,out byte id)
+        {
+            if (defs == null)
+            {
+                id = 0;
+                return false;
+            }
+            foreach (var attr in defs.CustomAttributes)
+            {
+                if (attr.AttributeType.Name == "EntryPointAttribute")
+                {
+                    var type = attr.ConstructorArguments[0].Type;
+                    var value = (byte)attr.ConstructorArguments[0].Value;
+
+                    //dosth
+                    id = value;
+                    return true;
+
+
+
+                }
+                //if(attr.t)
+            }
+            id = 0;
+            return false;
+
+        }
         public bool IsAppCall(Mono.Cecil.MethodDefinition defs, out byte[] hash)
         {
             if (defs == null)
@@ -607,16 +634,21 @@ namespace Neo.Compiler.MSIL
             }
 
             if (calltype == 0)
-                throw new Exception("unknown call:" + src.tokenMethod);
+                throw new Exception("unknown call: " + src.tokenMethod + "\r\n   in: " + to.name + "\r\n");
             var md = src.tokenUnknown as Mono.Cecil.MethodReference;
             var pcount = md.Parameters.Count;
-
+            bool havethis = md.HasThis;
             if(calltype==2)
             {
                 //opcode call 
             }
             else
             {//翻转参数顺序
+
+                //如果是syscall 并且有this的，翻转范围加一
+                if (calltype == 3 && havethis)
+                    pcount++;
+
                 _Convert1by1(VM.OpCode.NOP, src, to);
                 if (pcount <= 1)
                 {
@@ -656,7 +688,7 @@ namespace Neo.Compiler.MSIL
             if (calltype == 1)
             {
                 var c = _Convert1by1(VM.OpCode.CALL, null, to, new byte[] { 5, 0 });
-                c.needfix = true;
+                c.needfixfunc = true;
                 c.srcfunc = src.tokenMethod;
                 return 0;
             }
