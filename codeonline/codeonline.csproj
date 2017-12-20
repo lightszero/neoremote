@@ -17,6 +17,7 @@
     <IISExpressWindowsAuthentication />
     <IISExpressUseClassicPipelineMode />
     <UseGlobalApplicationHostFile />
+    <Use64BitIISExpress />
   </PropertyGroup>
   <ItemGroup>
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />
@@ -81,6 +82,7 @@
     <Content Include="min\vs\language\typescript\src\mode.js" />
     <Content Include="min\vs\language\typescript\src\worker.js" />
     <Content Include="min\vs\loader.js" />
+    <Content Include="neo.png" />
     <Content Include="web.config" />
   </ItemGroup>
   <ItemGroup>
